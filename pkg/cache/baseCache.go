@@ -5,10 +5,12 @@ import "sync"
 // BaseCache represents a cache interface,
 // providing methods for working with data: getting, setting, and deleting values.
 type BaseCache[K comparable, V any] interface {
-	Get(k K) (V, bool)
-	Set(k K, v V)
-	Delete(k K)
-	//GetAll() map[K]V
+	Get(k K) (V, bool) // get item from storage
+	Set(k K, v V)      // set item to storage
+	Delete(k K)        // delete item by key
+	Load() int         // get storage length
+	Clear()            // full clear storage
+	GetAll() map[K]V   // return all items from storage
 }
 
 // BaseInMemory implements an in-memory cache,
@@ -37,10 +39,6 @@ func (c *BaseInMemory[K, V]) Get(k K) (V, bool) {
 	return v, ok
 }
 
-//func (c *BaseInMemory[K, V]) GetAll() map[K]V {
-//	return c.data
-//}
-
 // Set stores the value v under the key k, ensuring write lock.
 func (c *BaseInMemory[K, V]) Set(k K, v V) {
 	c.mu.Lock()
@@ -55,4 +53,25 @@ func (c *BaseInMemory[K, V]) Delete(k K) {
 	defer c.mu.Unlock()
 
 	delete(c.data, k)
+}
+
+// Load return num of elements from map
+func (c *BaseInMemory[K, V]) Load() int {
+	return len(c.data)
+}
+
+// Clear delete all data from map
+func (c *BaseInMemory[K, V]) Clear() {
+	for k := range c.data {
+		delete(c.data, k)
+	}
+}
+
+// GetAll return all items from map
+func (c *BaseInMemory[K, V]) GetAll() map[K]V {
+	allData := make(map[K]V)
+	for k, v := range c.data {
+		allData[k] = v
+	}
+	return allData
 }
